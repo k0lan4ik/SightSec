@@ -1,0 +1,12 @@
+# Основные компоненты ядра и UI
+requests
+beautifulsoup4
+PyQt6 # Или PySide6, выберите одну
+# lxml 
+
+# Инструменты безопасности
+# bandit
+# trufflehog
+
+# Утилиты
+# python-json-logger
