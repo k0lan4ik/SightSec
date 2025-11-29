@@ -10,3 +10,7 @@ PyQt6 # Или PySide6, выберите одну
 
 # Утилиты
 # python-json-logger
+
+# Для вывода и отчётов
+colorama
+fpdf2

@@ -28,7 +28,12 @@ class ScannerEngine:
         context.log(f"Начало сканирования {target_url}...")
 
         all_results: List[ScanResult] = []
-        plugin_classes = self.pm.get_plugin_classes()
+        # ВАЖНОЕ ИЗМЕНЕНИЕ: Запрашиваем только активные плагины
+        plugin_classes = self.pm.get_plugin_classes(active_only=True)
+
+        if not plugin_classes:
+            context.log("ВНИМАНИЕ: Нет активных плагинов для запуска! Проверьте настройки.")
+            return []
 
         # --- 2. Разделение по фазам ---
         discovery_plugins = [cls(context) for cls in plugin_classes if cls.meta().get('type') == 'discovery']
@@ -48,19 +53,20 @@ class ScannerEngine:
         # --- 4. Фаза Audit (Параллельно) ---
         context.log("Phase 2: Audit (SQLi, XSS, Fuzzing)")
         
+        audit_futures = []
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # Запускаем все аудиторские плагины в отдельных потоках
-            future_to_plugin = {executor.submit(self._run_audit_plugin, p): p for p in audit_plugins}
+            # Сначала отправляем ВСЕ задачи
+            for plugin in audit_plugins:
+                audit_futures.append(executor.submit(self._run_audit_plugin, plugin))
             
-            for future in future_to_plugin:
-                plugin = future_to_plugin[future]
+            # Затем собираем результаты по мере готовности
+            from concurrent.futures import as_completed
+            for future in as_completed(audit_futures):
                 try:
-                    results = future.result()
-                    all_results.extend(results)
-                    context.log(f"Плагин {plugin.meta()['name']} завершен. Найдено: {len(results)}")
+                    res = future.result()
+                    all_results.extend(res)
                 except Exception as exc:
-                    context.log(f"Ошибка в плагине {plugin.meta()['name']}: {exc}")
-        
+                     context.log(f"Thread Error: {exc}")
         
         # --- 5. Фаза White Box (Последовательно, т.к. может быть ресурсоемко) ---
         if config.get("local_source_path"):
@@ -70,6 +76,8 @@ class ScannerEngine:
                 results = plugin.run()
                 all_results.extend(results)
                 plugin.teardown()
+        else:
+            context.log("Phase 3: White Box skipped (no source path provided)")
         
         
         context.log("Сканирование завершено.")

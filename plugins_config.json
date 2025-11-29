@@ -1,0 +1,14 @@
+{
+    "enabled_plugins": [
+        "SQL Injection Scanner",
+        "Local Config Auditor",
+        "Basic Crawler",
+        "Hardcoded Secrets Scanner",
+        "SQLi Heuristic Scanner",
+        "Basic XSS Fuzzer",
+        "sensitive_files",
+        "security_headers",
+        "hardcoded_secrets",
+        "sql_injection_static"
+    ]
+}
