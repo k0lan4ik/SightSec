@@ -90,7 +90,7 @@ class PdfReporter(FPDF):
 
     def footer(self):
         self.set_y(-15)
-        self.set_font(self.font_name, '', 8)
+        self.set_font(self.font_name, 'I', 8)
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
     def add_vulnerability(self, res: ScanResult):
